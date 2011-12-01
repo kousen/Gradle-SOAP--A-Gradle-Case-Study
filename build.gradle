@@ -1,0 +1,66 @@
+apply plugin:'groovy'
+apply plugin:'eclipse'
+
+//repositories {
+//    mavenCentral()
+//    mavenRepo urls:["http://download.java.net/maven/1",
+//        "http://download.java.net/maven/2"]
+//}
+
+repositories {
+    mavenCentral()
+    maven { url 'http://download.java.net/maven/1' }
+    maven { url 'http://download.java.net/maven/2' }
+}
+
+configurations {
+    jaxws
+}
+
+sourceSets {
+    main {
+        java { srcDir "$buildDir/generated" }
+        groovy { srcDir 'src' }
+    }
+    test {
+        java { srcDirs = [] }
+        groovy { srcDir 'tests' }
+        resources { srcDir 'resources' }
+    }
+}
+
+task wsimport(dependsOn: processResources)  {
+    sourceSets.main.output.classesDir.mkdirs()
+    destDir = new File(buildDir, 'generated')
+    destDir.mkdirs()
+    wsdlSrc = file('currency_convertor.wsdl')
+    inputs.file wsdlSrc
+    outputs.dir destDir
+    doLast{
+        ant {
+            taskdef(name:'wsimport',
+                classname:'com.sun.tools.ws.ant.WsImport',
+                classpath:configurations.jaxws.asPath)
+            wsimport(keep:true,
+                destdir: sourceSets.main.output.classesDir,
+                sourcedestdir: destDir,
+                //wsdl:'http://www.webservicex.net/CurrencyConvertor.asmx?wsdl')
+                wsdl: wsdlSrc)
+        }
+    }
+}
+//wsimport.onlyIf { !(new File(buildDir, "generated").exists()) }
+compileJava.dependsOn(wsimport)
+
+task wrapper(type:Wrapper) {
+    gradleVersion = '1.0-milestone-6'
+}
+
+def spockVersion = '0.5-groovy-1.8'
+
+dependencies {
+    groovy group:'org.codehaus.groovy', name:'groovy-all', version:'1.8.4'
+    jaxws 'com.sun.xml.ws:jaxws-tools:2.1.4'
+
+    testCompile "org.spockframework:spock-core:$spockVersion"
+}
