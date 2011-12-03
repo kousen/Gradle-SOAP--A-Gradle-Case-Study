@@ -29,14 +29,14 @@ sourceSets {
     }
 }
 
-task wsimport(dependsOn: processResources)  {
-    sourceSets.main.output.classesDir.mkdirs()
-    destDir = new File(buildDir, 'generated')
-    destDir.mkdirs()
+task wsimport  {
+    destDir = file("${buildDir}/generated")
     wsdlSrc = file('currency_convertor.wsdl')
     inputs.file wsdlSrc
     outputs.dir destDir
-    doLast{
+    doLast {
+        sourceSets.main.output.classesDir.mkdirs()
+        destDir.mkdirs()
         ant {
             taskdef(name:'wsimport',
                 classname:'com.sun.tools.ws.ant.WsImport',
